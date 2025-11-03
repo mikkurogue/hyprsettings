@@ -5,6 +5,7 @@ use gpui_component::{button::*, *};
 use crate::ui::{keyboard_settings::KeyboardSettings, monitor_settings::MonitorSettings};
 
 mod conf;
+mod keyboard;
 mod monitor;
 mod ui;
 
@@ -52,7 +53,7 @@ impl Render for Hyprconfig {
                 div()
                     .text_xl()
                     .font_weight(FontWeight::BOLD)
-                    .child("Keyobard settings"),
+                    .child("Keyboard settings"),
             )
             .child(self.keyboard_settings.clone())
     }

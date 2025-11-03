@@ -5,8 +5,9 @@ use std::collections::HashSet;
 
 use gpui_component::StyledExt;
 
+use crate::conf::{self, write_override_line};
+
 pub struct KeyboardSettings {
-    locales: Vec<String>,
     selected_locales: HashSet<String>,
     locale_dropdown: Entity<DropdownState<Vec<String>>>,
 }
@@ -23,7 +24,19 @@ impl KeyboardSettings {
             "de".to_string(),
         ];
 
-        let current_locale_idx = locales.iter().position(|l| l == "fi");
+        // Get current locales from hyprctl
+        let selected_locales = crate::keyboard::get_current_locales().unwrap_or_else(|e| {
+            eprintln!("Failed to get current locales: {}, using default", e);
+            let mut default_set = HashSet::new();
+            default_set.insert("fi".to_string());
+            default_set
+        });
+
+        // Set initial dropdown selection to first locale in the set
+        let current_locale_idx = selected_locales
+            .iter()
+            .next()
+            .and_then(|locale| locales.iter().position(|l| l == locale));
 
         let locale_dropdown = cx.new(|cx| {
             DropdownState::new(
@@ -33,11 +46,6 @@ impl KeyboardSettings {
                 cx,
             )
         });
-
-        let mut selected_locales = HashSet::new();
-        if let Some(idx) = current_locale_idx {
-            selected_locales.insert(locales[idx].clone());
-        }
 
         // Subscribe to dropdown selection events
         cx.subscribe(
@@ -53,7 +61,6 @@ impl KeyboardSettings {
         .detach();
 
         KeyboardSettings {
-            locales,
             selected_locales,
             locale_dropdown,
         }
@@ -80,7 +87,7 @@ impl Render for KeyboardSettings {
                 div()
                     .font_weight(FontWeight::BOLD)
                     .text_lg()
-                    .child(format!("Keyboard Settings")),
+                    .child("Keyboard Settings".to_string()),
             )
             .child(
                 div()
@@ -133,10 +140,16 @@ impl Render for KeyboardSettings {
                         Button::new("apply-keyboard-settings")
                             .label("Apply keyboard config")
                             .on_click(move |_, _, _cx| {
-                                println!(
-                                    "Apply keyboard settings clicked with locales: {:?}",
-                                    selected_locales
-                                );
+                                // TODO: remove the clone here this is just dirty hack to get it
+                                // working
+                                let override_str = conf::locale_override(selected_locales.clone());
+
+                                // DEBUG
+                                println!("Generated locale override string: {}", override_str);
+
+                                write_override_line(&override_str).unwrap_or_else(|e| {
+                                    println!("Failed to write override line: {}", e);
+                                });
                             }),
                     ),
             )
