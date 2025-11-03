@@ -35,7 +35,7 @@ impl MonitorSettings {
         let resolution_dropdown = cx.new(|cx| {
             DropdownState::new(
                 resolutions.clone(),
-                current_res_idx.map(|idx| IndexPath::new(idx)),
+                current_res_idx.map(IndexPath::new),
                 window,
                 cx,
             )
@@ -55,7 +55,7 @@ impl MonitorSettings {
         let refresh_dropdown = cx.new(|cx| {
             DropdownState::new(
                 refresh_rates.clone(),
-                current_refresh_idx.map(|idx| IndexPath::new(idx)),
+                current_refresh_idx.map(IndexPath::new),
                 window,
                 cx,
             )

@@ -46,13 +46,12 @@ impl Render for Hyprconfig {
                         }
                     }),
             )
-            .children(self.monitor_settings.iter().map(|m| m.clone()))
+            .children(self.monitor_settings.iter().cloned())
     }
 }
 
 pub fn init(cx: &mut App) {
     // gpui-component has built-in themes
-    // You can choose from: "Tokyo", "Ayu", "Gruvbox", "Catppuccin", "Dracula", "Nord", "One", "Solarized", "Rose Pine"
     let theme_name = "Default Dark";
 
     // Try to load the built-in theme
