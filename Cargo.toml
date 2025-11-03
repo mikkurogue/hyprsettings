@@ -1,0 +1,9 @@
+[package]
+name = "hyprconfig"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+gpui = "0.2.2"
+gpui-component = "0.3.1"
