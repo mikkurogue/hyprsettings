@@ -6,29 +6,45 @@ use std::collections::HashSet;
 use gpui_component::StyledExt;
 
 use crate::conf::{self, write_override_line};
+use crate::keyboard::LocaleInfo;
 
 pub struct KeyboardSettings {
     selected_locales: HashSet<String>,
+    available_locales: Vec<LocaleInfo>,
     locale_dropdown: Entity<DropdownState<Vec<String>>>,
 }
 
 impl KeyboardSettings {
     pub fn new(window: &mut gpui::Window, cx: &mut gpui::Context<Self>) -> Self {
-        // example locales for now
-        let locales = vec![
-            "us".to_string(),
-            "gb".to_string(),
-            "fi".to_string(),
-            "dk".to_string(),
-            "no".to_string(),
-            "de".to_string(),
-        ];
+        // Load available locales from XKB
+        let available_locales = crate::keyboard::get_available_locales().unwrap_or_else(|e| {
+            eprintln!("Failed to load locales from XKB: {}, using fallback", e);
+            vec![
+                LocaleInfo {
+                    code: "us".to_string(),
+                    label: "English (US)".to_string(),
+                },
+                LocaleInfo {
+                    code: "gb".to_string(),
+                    label: "English (UK)".to_string(),
+                },
+                LocaleInfo {
+                    code: "fi".to_string(),
+                    label: "Finnish".to_string(),
+                },
+            ]
+        });
 
-        // Get current locales from hyprctl
+        // Create labels for dropdown (display label with code)
+        let locale_labels: Vec<String> = available_locales
+            .iter()
+            .map(|l| format!("{} ({})", l.label, l.code))
+            .collect();
+
         let selected_locales = crate::keyboard::get_current_locales().unwrap_or_else(|e| {
             eprintln!("Failed to get current locales: {}, using default", e);
             let mut default_set = HashSet::new();
-            default_set.insert("fi".to_string());
+            default_set.insert("us".to_string());
             default_set
         });
 
@@ -36,11 +52,11 @@ impl KeyboardSettings {
         let current_locale_idx = selected_locales
             .iter()
             .next()
-            .and_then(|locale| locales.iter().position(|l| l == locale));
+            .and_then(|locale| available_locales.iter().position(|l| &l.code == locale));
 
         let locale_dropdown = cx.new(|cx| {
             DropdownState::new(
-                locales.clone(),
+                locale_labels.clone(),
                 current_locale_idx.map(gpui_component::IndexPath::new),
                 window,
                 cx,
@@ -51,10 +67,12 @@ impl KeyboardSettings {
         cx.subscribe(
             &locale_dropdown,
             |this, _dropdown, event: &DropdownEvent<Vec<String>>, cx| {
-                if let DropdownEvent::Confirm(Some(selected_value)) = event {
-                    // HashSet automatically handles uniqueness
-                    this.selected_locales.insert(selected_value.clone());
-                    cx.notify();
+                if let DropdownEvent::Confirm(Some(selected_label)) = event {
+                    // Extract the code from the label format "Label (code)"
+                    if let Some(code) = this.extract_code_from_label(selected_label) {
+                        this.selected_locales.insert(code);
+                        cx.notify();
+                    }
                 }
             },
         )
@@ -62,6 +80,7 @@ impl KeyboardSettings {
 
         KeyboardSettings {
             selected_locales,
+            available_locales,
             locale_dropdown,
         }
     }
@@ -69,6 +88,22 @@ impl KeyboardSettings {
     fn remove_locale(&mut self, locale: &str, cx: &mut Context<Self>) {
         self.selected_locales.remove(locale);
         cx.notify();
+    }
+
+    fn extract_code_from_label(&self, label: &str) -> Option<String> {
+        // Extract code from "Label (code)" format
+        label
+            .rfind('(')
+            .and_then(|start| label.rfind(')').map(|end| (start, end)))
+            .map(|(start, end)| label[start + 1..end].trim().to_string())
+    }
+
+    fn get_label_for_code(&self, code: &str) -> String {
+        self.available_locales
+            .iter()
+            .find(|l| l.code == code)
+            .map(|l| l.label.clone())
+            .unwrap_or_else(|| code.to_string())
     }
 }
 
@@ -110,6 +145,7 @@ impl Render for KeyboardSettings {
                                 .enumerate()
                                 .map(|(idx, locale)| {
                                     let locale_clone = locale.clone();
+                                    let label = self.get_label_for_code(locale);
                                     div()
                                         .h_flex()
                                         .gap_1()
@@ -120,7 +156,11 @@ impl Render for KeyboardSettings {
                                         .rounded_md()
                                         .bg(rgb(0x2a2a2a))
                                         .items_center()
-                                        .child(div().text_sm().child(locale.clone()))
+                                        .child(
+                                            div()
+                                                .text_sm()
+                                                .child(format!("{} ({})", label, locale)),
+                                        )
                                         .child(Button::new(("remove", idx)).label("×").on_click(
                                             cx.listener(move |this, _, _, cx| {
                                                 this.remove_locale(&locale_clone, cx);
