@@ -1,25 +1,26 @@
 use gpui::App;
 use gpui::*;
+use gpui_component::scroll::ScrollbarAxis;
 use gpui_component::*;
 
 mod conf;
 mod ui;
 mod util;
 
-use crate::ui::{keyboard_settings::KeyboardSettings, monitor_settings::MonitorSettings};
+use crate::ui::{input_settings::InputSettings, monitor_settings::MonitorSettings};
 use crate::util::monitor;
 
 pub struct Hyprconfig {
     monitor_settings: Vec<Entity<MonitorSettings>>,
-    keyboard_settings: Entity<KeyboardSettings>,
+    input_settings: Entity<InputSettings>,
 }
 
 impl Render for Hyprconfig {
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
-        div()
-            .v_flex()
+        v_flex()
             .gap_4()
             .size_full()
+            .scrollable(ScrollbarAxis::Vertical)
             .bg(transparent_white())
             .p_4()
             .child(
@@ -33,7 +34,7 @@ impl Render for Hyprconfig {
             .children(self.monitor_settings.iter().cloned())
             .child(div().w_full().h_1().rounded_sm().bg(rgb(0xf6f6f6)))
             .child(div().font_normal().child("Input"))
-            .child(self.keyboard_settings.clone())
+            .child(self.input_settings.clone())
     }
 }
 
@@ -80,11 +81,11 @@ fn main() {
                         .map(|monitor| cx.new(|cx| MonitorSettings::new(monitor, window, cx)))
                         .collect();
 
-                    let keyboard_settings = cx.new(|cx| KeyboardSettings::new(window, cx));
+                    let input_settings = cx.new(|cx| InputSettings::new(window, cx));
 
                     Hyprconfig {
                         monitor_settings,
-                        keyboard_settings,
+                        input_settings,
                     }
                 });
                 // Root component
