@@ -21,13 +21,18 @@ This will by itself also then write all overrides into this new file.
 This file is meant to not be very organized or "readable" as its only job is to exist as a configuration file.
 Also the only easy configurations that are settable for now are ones that provide us with unique identifiers until i can figure out a good solution.
 
-I.e. monitors, as we can fetch monitors with `hyprctl monitors all` and get every connected monitor
-For inputs like mouse (sensitivity) and keyboard (layout/locale) is easy enough to also do
-
 ## Status
 
 This project is actively in development. The basics are being worked on and core functionality is being implemented.
 
+Currently working features:
+
+- Setup a monitor for refresh rate and resolution.
+- Setup keyboard locale(s) (hyprland supports multiple and so do we!)
+- Setup mouse sensitivity (global input setting)
+- Enable or disable mouse acceleration (global input setting)
+
 ## Contributing
 
-**Contributions are welcome!** Whether you want to report bugs, suggest features, improve documentation, or submit code, your help is appreciated. Feel free to open issues or pull requests.
+**Contributions are welcome!** 
+Whether you want to report bugs, suggest features, improve documentation, or submit code, your help is appreciated. Feel free to open issues or pull requests.
