@@ -1,13 +1,18 @@
-# Hyprconfig - The hyprland gui settings tool for idots
+# Hyprconfig
 
 ![build](https://github.com/mikkurogue/hyprconfig/actions/workflows/rust.yml/badge.svg)
 
-Basically just a small utility to on the fly edit the hyprland coniguration settings that are defined.
-Some people are just bad at reading the docs, and some are bad at understanding words (me), so I wanted 
-to create a tool that will allow users to find, re-define or change their settings from a gui application.
+A GUI configuration tool for Hyprland designed to make setup and configuration easier for everyone.
 
-I am a firm beliver that if Linux needs more wider adoption, and especially Hyprland as well, we should
-have an ecosystem that is also "noob" or "normie" friendly.
+## What is Hyprconfig?
+
+Hyprconfig is a graphical user interface tool that helps you configure Hyprland without having to manually edit configuration files. It's designed specifically for:
+
+- **New Linux/Hyprland users** who are still learning their way around
+- **Users who prefer GUIs** over editing text configuration files
+- **Anyone who wants a pain-free setup** for monitors, inputs, and other core settings
+
+Whether you're not super tech-savvy or simply want to configure your main Hyprland settings quickly and easily, Hyprconfig provides an intuitive interface to get your system set up without diving into documentation or syntax.
 
 ## Overrides
 This project (on first run) will create and append a new `conf-overrides.conf` to your hyprland config.
@@ -21,6 +26,8 @@ For inputs like mouse (sensitivity) and keyboard (layout/locale) is easy enough 
 
 ## Status
 
-Project is very much still in progress, I'm working on the basics and writing down what I still need to figure out.
+This project is actively in development. The basics are being worked on and core functionality is being implemented.
 
-Feedback and contributions are welcome :)
+## Contributing
+
+**Contributions are welcome!** Whether you want to report bugs, suggest features, improve documentation, or submit code, your help is appreciated. Feel free to open issues or pull requests.
