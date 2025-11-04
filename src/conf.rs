@@ -9,16 +9,18 @@ const HYPR_OVERRIDES_PATH: &str = ".config/hypr/conf-overrides.conf";
 
 const MONITOR_CONFIG_PREFIX: &str = "monitor=";
 const KEYBOARD_LAYOUT_PREFIX: &str = "input:kb_layout=";
+const MOUSE_SENSITIVITY_PREFIX: &str = "input:sensitivity=";
+const MOUSE_FORCE_NO_ACCEL_PREFIX: &str = "input:force_no_accel=";
 
 /// Trait for configuration lines that can be overridden in the config file
 trait ConfigLine {
     /// Get the prefix that identifies this type of config line
     fn prefix(&self) -> &str;
-    
+
     /// Extract the identifier/key from a config line (e.g., monitor name, setting key)
     /// Returns None if the line doesn't match this config type
     fn extract_key(&self, line: &str) -> Option<String>;
-    
+
     /// Check if this line should replace an existing line with the same key
     fn should_replace(&self) -> bool {
         true
@@ -27,12 +29,15 @@ trait ConfigLine {
 
 struct MonitorConfig;
 struct KeyboardLayoutConfig;
+// I dont like this but i am too stupid and tired to think
+struct MouseSensitivityConfig;
+struct MouseForceNoAccelConfig;
 
 impl ConfigLine for MonitorConfig {
     fn prefix(&self) -> &str {
         MONITOR_CONFIG_PREFIX
     }
-    
+
     fn extract_key(&self, line: &str) -> Option<String> {
         let trimmed = line.trim();
         if let Some(config) = trimmed.strip_prefix(self.prefix())
@@ -48,11 +53,41 @@ impl ConfigLine for KeyboardLayoutConfig {
     fn prefix(&self) -> &str {
         KEYBOARD_LAYOUT_PREFIX
     }
-    
+
     fn extract_key(&self, line: &str) -> Option<String> {
         if line.trim().starts_with(self.prefix()) {
             // For keyboard layout, we use a constant key since there's only one
             Some("kb_layout".to_string())
+        } else {
+            None
+        }
+    }
+}
+
+impl ConfigLine for MouseSensitivityConfig {
+    fn prefix(&self) -> &str {
+        MOUSE_SENSITIVITY_PREFIX
+    }
+
+    fn extract_key(&self, line: &str) -> Option<String> {
+        if line.trim().starts_with(self.prefix()) {
+            // For mouse sensitivity, we use a constant key since there's only one
+            Some("sensitivity".to_string())
+        } else {
+            None
+        }
+    }
+}
+
+impl ConfigLine for MouseForceNoAccelConfig {
+    fn prefix(&self) -> &str {
+        MOUSE_FORCE_NO_ACCEL_PREFIX
+    }
+
+    fn extract_key(&self, line: &str) -> Option<String> {
+        if line.trim().starts_with(self.prefix()) {
+            // For mouse force_no_accel, we use a constant key since there's only one
+            Some("force_no_accel".to_string())
         } else {
             None
         }
@@ -64,6 +99,8 @@ fn get_config_handlers() -> Vec<Box<dyn ConfigLine>> {
     vec![
         Box::new(MonitorConfig),
         Box::new(KeyboardLayoutConfig),
+        Box::new(MouseSensitivityConfig),
+        Box::new(MouseForceNoAccelConfig),
     ]
 }
 
@@ -156,7 +193,6 @@ pub fn write_override_line(line: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-
 /// Generate a monitor override string for hyprland configuration.
 /// Currently just generates the basic one as i am a europoor and only have 1 monitor to test with.
 pub fn monitor_override(monitor_name: String, settings: MonitorMode) -> String {
@@ -180,16 +216,18 @@ pub fn locale_override(locale: HashSet<String>) -> String {
     input_locale_setting
 }
 
-// Capitalise the locales so they are easier to read for now
-// TODO: Find some form of default list of 2-letter locale codes with proper names
-// e.g., "us" -> "US", "fi" -> "FI". Maybe hyprland config has a list
-#[allow(dead_code)]
-pub fn humanize_locale(locale: &str) -> String {
-    locale
-        .chars()
-        .enumerate()
-        .map(|(i, c)| if i == 0 { c.to_ascii_uppercase() } else { c })
-        .collect()
+/// Generate a mouse sensitivity override string for hyprland configuration.
+pub fn mouse_sensitivity_override(sensitivity: f32) -> String {
+    format!("{}{}", MOUSE_SENSITIVITY_PREFIX, sensitivity)
+}
+
+/// Generate a mouse force_no_accel override string for hyprland configuration.
+pub fn mouse_force_no_accel_override(force_no_accel: bool) -> String {
+    format!(
+        "{}{}",
+        MOUSE_FORCE_NO_ACCEL_PREFIX,
+        if force_no_accel { 1 } else { 0 }
+    )
 }
 
 #[cfg(test)]
