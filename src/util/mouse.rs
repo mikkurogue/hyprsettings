@@ -16,7 +16,7 @@ pub fn get_accel_setting() -> anyhow::Result<bool> {
         .output()?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let parts = stdout.trim().split_whitespace().collect::<Vec<&str>>();
+    let parts = stdout.split_whitespace().collect::<Vec<&str>>();
     if parts.len() < 2 {
         return Err(anyhow::anyhow!("Invalid output from hyprctl getoption"));
     }
@@ -35,7 +35,7 @@ pub fn get_accel_setting() -> anyhow::Result<bool> {
 }
 
 fn parse_sens(output: &str) -> anyhow::Result<f32> {
-    let parts: Vec<&str> = output.trim().split_whitespace().collect();
+    let parts: Vec<&str> = output.split_whitespace().collect();
 
     // assume for now that the first 2 parts is float and the value. the rest are not important
     if parts.len() < 2 {

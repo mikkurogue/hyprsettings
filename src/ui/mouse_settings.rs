@@ -73,7 +73,7 @@ impl Render for MouseSettings {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let slider_raw = self.mouse_sensitivity_slider.read(cx).value().start();
         let current_sens = slider_to_sensitivity(slider_raw);
-        let accel_setting = self.force_no_accel_checked.clone();
+        let accel_setting = self.force_no_accel_checked;
 
         div()
             .v_flex()
