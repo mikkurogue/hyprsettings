@@ -4,6 +4,7 @@ use gpui_component::ActiveTheme as _;
 use gpui_component::dropdown::*;
 use gpui_component::button::Button;
 use gpui_component::IndexPath;
+use std::process::Command;
 
 use crate::util::monitor::MonitorInfo;
 use crate::conf::{monitor_override, write_override_line};
@@ -230,6 +231,35 @@ impl MonitorVisualizer {
         }
         println!("========================\n");
     }
+
+    fn apply_monitor_config_immediately(&self, monitor_box: &MonitorBox) {
+        let config_value = format!("{},{}@{},{}x{},1",
+            monitor_box.monitor.name,
+            monitor_box.monitor.current_resolution,
+            monitor_box.monitor.current_refresh_rate,
+            monitor_box.monitor.position.0,
+            monitor_box.monitor.position.1
+        );
+        
+        println!("Applying monitor position via hyprctl: {}", config_value);
+        
+        match Command::new("hyprctl")
+            .args(["keyword", "monitor", &config_value])
+            .output()
+        {
+            Ok(output) => {
+                if output.status.success() {
+                    println!("✓ Monitor position applied successfully");
+                } else {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    println!("✗ Failed to apply monitor position: {}", stderr);
+                }
+            }
+            Err(e) => {
+                println!("✗ Failed to execute hyprctl: {}", e);
+            }
+        }
+    }
 }
 
 impl Render for MonitorVisualizer {
@@ -350,6 +380,37 @@ impl Render for MonitorVisualizer {
                                         this.update_dropdowns_for_monitor(idx, window, cx);
                                     }
                                 } else {
+                                    // Update the monitor's position after dragging
+                                    if let Some(monitor_box) = this.monitors.get(idx) {
+                                        // Calculate new position first (immutable borrow)
+                                        let new_position = this.calculate_actual_position(
+                                            monitor_box.visual_x,
+                                            monitor_box.visual_y,
+                                        );
+                                        
+                                        // Now update with mutable borrow
+                                        if let Some(monitor_box) = this.monitors.get_mut(idx) {
+                                            monitor_box.monitor.position = new_position;
+                                            
+                                            // Write the new position to config file
+                                            let override_str = monitor_override(
+                                                monitor_box.monitor.name.clone(),
+                                                MonitorMode {
+                                                    resolution: monitor_box.monitor.current_resolution.clone(),
+                                                    refresh_rate: monitor_box.monitor.current_refresh_rate,
+                                                },
+                                                new_position,
+                                            );
+                                            
+                                            write_override_line(&override_str).unwrap_or_else(|e| {
+                                                println!("Failed to write override: {}", e);
+                                            });
+                                            
+                                            // Apply immediately via hyprctl
+                                            let monitor_box_clone = monitor_box.clone();
+                                            this.apply_monitor_config_immediately(&monitor_box_clone);
+                                        }
+                                    }
                                     // Print positions after dragging
                                     this.print_monitor_positions();
                                 }
@@ -541,7 +602,7 @@ impl Render for MonitorVisualizer {
                                                                                 .parse()
                                                                                 .unwrap_or(60.0);
                                                                             
-                                                                            // Use the monitor's current position
+                                                                            // Use the monitor's current position (updated after dragging)
                                                                             let position = monitor.position;
                                                                             
                                                                             println!("Applying: {} @ {}Hz at {}x{} to {}", 
@@ -556,9 +617,36 @@ impl Render for MonitorVisualizer {
                                                                                 position,
                                                                             );
                                                                             
+                                                                            // Write to config file
                                                                             write_override_line(&override_str).unwrap_or_else(|e| {
                                                                                 println!("Failed to write override: {}", e);
                                                                             });
+                                                                            
+                                                                            // Apply immediately using hyprctl keyword
+                                                                            let config_value = format!("{},{}@{},{}x{},1",
+                                                                                monitor_name,
+                                                                                resolution,
+                                                                                refresh_rate,
+                                                                                position.0,
+                                                                                position.1
+                                                                            );
+                                                                            
+                                                                            match Command::new("hyprctl")
+                                                                                .args(["keyword", "monitor", &config_value])
+                                                                                .output()
+                                                                            {
+                                                                                Ok(output) => {
+                                                                                    if output.status.success() {
+                                                                                        println!("✓ Monitor configuration applied successfully");
+                                                                                    } else {
+                                                                                        let stderr = String::from_utf8_lossy(&output.stderr);
+                                                                                        println!("✗ Failed to apply monitor config: {}", stderr);
+                                                                                    }
+                                                                                }
+                                                                                Err(e) => {
+                                                                                    println!("✗ Failed to execute hyprctl: {}", e);
+                                                                                }
+                                                                            }
                                                                         }
                                                                     }
                                                                 })
