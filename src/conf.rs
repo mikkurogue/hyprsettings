@@ -194,14 +194,20 @@ pub fn write_override_line(line: &str) -> anyhow::Result<()> {
 }
 
 /// Generate a monitor override string for hyprland configuration.
-/// Currently just generates the basic one as i am a europoor and only have 1 monitor to test with.
-pub fn monitor_override(monitor_name: String, settings: MonitorMode) -> String {
-    // for now we want this, as I only have 1 monitor to test with so position settings are TODO
-    let auto_position_string = format!("{}@{},auto,1", settings.resolution, settings.refresh_rate);
+/// Format: monitor=name,resolution@refreshrate,position,scale
+/// Example: monitor=DP-3,2560x1440@155,0x0,1
+pub fn monitor_override(monitor_name: String, settings: MonitorMode, position: (i32, i32)) -> String {
+    let position_string = format!("{}x{}", position.0, position.1);
+    let config_string = format!(
+        "{}@{},{},1",
+        settings.resolution,
+        settings.refresh_rate,
+        position_string
+    );
 
     format!(
         "{}{},{}",
-        MONITOR_CONFIG_PREFIX, monitor_name, auto_position_string
+        MONITOR_CONFIG_PREFIX, monitor_name, config_string
     )
 }
 
@@ -238,15 +244,49 @@ mod tests {
     fn test_monitor_config_extract_key() {
         let monitor_config = MonitorConfig;
         assert_eq!(
-            monitor_config.extract_key("monitor=DP-3,2560x1440@155,auto,1"),
+            monitor_config.extract_key("monitor=DP-3,2560x1440@155,0x0,1"),
             Some("DP-3".to_string())
         );
         assert_eq!(
-            monitor_config.extract_key("  monitor=HDMI-A-1,1920x1080@60,auto,1  "),
+            monitor_config.extract_key("  monitor=HDMI-A-1,1920x1080@60,1920x0,1  "),
             Some("HDMI-A-1".to_string())
         );
         assert_eq!(monitor_config.extract_key("# comment line"), None);
         assert_eq!(monitor_config.extract_key("some other config"), None);
+    }
+    
+    #[test]
+    fn test_monitor_override_with_position() {
+        let result = monitor_override(
+            "DP-3".to_string(),
+            MonitorMode {
+                resolution: "2560x1440".to_string(),
+                refresh_rate: 155.0,
+            },
+            (0, 0),
+        );
+        assert_eq!(result, "monitor=DP-3,2560x1440@155,0x0,1");
+        
+        let result2 = monitor_override(
+            "HDMI-A-1".to_string(),
+            MonitorMode {
+                resolution: "1920x1080".to_string(),
+                refresh_rate: 60.0,
+            },
+            (1920, 0),
+        );
+        assert_eq!(result2, "monitor=HDMI-A-1,1920x1080@60,1920x0,1");
+        
+        // Test negative position (monitor above primary)
+        let result3 = monitor_override(
+            "DP-2".to_string(),
+            MonitorMode {
+                resolution: "1920x1080".to_string(),
+                refresh_rate: 144.0,
+            },
+            (0, -1080),
+        );
+        assert_eq!(result3, "monitor=DP-2,1920x1080@144,0x-1080,1");
     }
 
     #[test]

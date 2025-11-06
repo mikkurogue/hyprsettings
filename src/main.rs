@@ -8,14 +8,12 @@ mod conf;
 mod ui;
 mod util;
 
-use crate::ui::section_container::{
-    main_container, section_divider, section_sub_container, section_title,
-};
-use crate::ui::{input_settings::InputSettings, monitor_settings::MonitorSettings};
+use crate::ui::section_container::{main_container, section_divider, section_title};
+use crate::ui::{input_settings::InputSettings, monitor_visualizer::MonitorVisualizer};
 use crate::util::monitor;
 
 pub struct Hyprconfig {
-    monitor_settings: Vec<Entity<MonitorSettings>>,
+    monitor_visualizer: Entity<MonitorVisualizer>,
     input_settings: Entity<InputSettings>,
 }
 
@@ -25,7 +23,7 @@ impl Render for Hyprconfig {
             .child(section_title("Hyprland configuration tool", cx))
             .child(section_divider(cx))
             .child(section_title("Monitors", cx))
-            .child(section_sub_container(cx).children(self.monitor_settings.iter().cloned()))
+            .child(self.monitor_visualizer.clone())
             .child(section_divider(cx))
             .child(section_title("Input", cx))
             .child(self.input_settings.clone())
@@ -72,15 +70,14 @@ fn main() {
                 let view = cx.new(|cx| {
                     // Load monitors
                     let monitors = monitor::get_monitors().unwrap_or_default();
-                    let monitor_settings: Vec<Entity<MonitorSettings>> = monitors
-                        .into_iter()
-                        .map(|monitor| cx.new(|cx| MonitorSettings::new(monitor, window, cx)))
-                        .collect();
+
+                    let monitor_visualizer =
+                        cx.new(|cx| MonitorVisualizer::new(monitors.clone(), window, cx));
 
                     let input_settings = cx.new(|cx| InputSettings::new(window, cx));
 
                     Hyprconfig {
-                        monitor_settings,
+                        monitor_visualizer,
                         input_settings,
                     }
                 });
