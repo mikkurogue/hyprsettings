@@ -3,6 +3,7 @@ use gpui_component::StyledExt;
 use gpui_component::button::Button;
 use gpui_component::slider::{Slider, SliderEvent, SliderState};
 use gpui_component::switch::Switch;
+use gpui_component::ActiveTheme as _;
 
 use crate::conf::{mouse_force_no_accel_override, mouse_sensitivity_override, write_override_line};
 use crate::ui::section_container::section_container;
@@ -76,11 +77,12 @@ impl Render for MouseSettings {
         let current_sens = slider_to_sensitivity(slider_raw);
         let accel_setting = self.force_no_accel_checked;
 
-        section_container()
+        section_container(cx)
             .min_h(px(200.0))
             .child(
                 div()
                     .font_weight(FontWeight::BOLD)
+                    .text_color(cx.theme().foreground)
                     .child("Mouse settings".to_string()),
             )
             .child(
@@ -96,7 +98,7 @@ impl Render for MouseSettings {
                             .child(
                                 div()
                                     .text_size(px(14.0))
-                                    .text_color(rgb(0x808080))
+                                    .text_color(cx.theme().muted_foreground)
                                     .child(format!("{:.2}", current_sens)),
                             ),
                     )
@@ -109,18 +111,18 @@ impl Render for MouseSettings {
                                 div()
                                     .min_w(px(120.0))
                                     .text_size(px(12.0))
-                                    .text_color(rgb(0x808080))
+                                    .text_color(cx.theme().muted_foreground)
                                     .child("Slow"),
                             )
                             .child(
                                 Slider::new(&self.mouse_sensitivity_slider)
                                     .w_full()
-                                    .text_color(hsla(219.0, 0.21, 0.24, 1.0)),
+                                    .text_color(cx.theme().foreground),
                             )
                             .child(
                                 div()
                                     .text_size(px(12.0))
-                                    .text_color(rgb(0x808080))
+                                    .text_color(cx.theme().muted_foreground)
                                     .child("Fast"),
                             ),
                     ),

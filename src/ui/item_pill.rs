@@ -1,15 +1,16 @@
 use gpui::*;
-use gpui_component::StyledExt;
+use gpui_component::{StyledExt, ActiveTheme};
 
-pub fn item_pill() -> Div {
+pub fn item_pill<T>(cx: &mut Context<T>) -> Div {
     div()
         .h_flex()
         .gap_1()
         .px_2()
         .py_1()
         .border_1()
-        .border_color(rgb(0x606060))
+        .border_color(cx.theme().colors.border)
         .rounded_md()
-        .bg(rgb(0x2a2a2a))
+        .bg(cx.theme().colors.background)
+        .text_color(cx.theme().colors.foreground)
         .items_center()
 }

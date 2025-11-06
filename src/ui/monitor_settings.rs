@@ -2,7 +2,7 @@ use gpui::*;
 use gpui_component::button::Button;
 use gpui_component::dropdown::*;
 
-use gpui_component::{IndexPath, StyledExt};
+use gpui_component::{IndexPath, StyledExt, ActiveTheme as _};
 
 use crate::conf::{monitor_override, write_override_line};
 use crate::ui::section_container::section_container;
@@ -93,7 +93,7 @@ impl MonitorSettings {
 }
 
 impl Render for MonitorSettings {
-    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let monitor_id = self.monitor_id;
         let monitor_name = self.monitor_name.clone();
         let resolutions = self.resolutions.clone();
@@ -101,10 +101,11 @@ impl Render for MonitorSettings {
         let resolution_dropdown = self.resolution_dropdown.clone();
         let refresh_dropdown = self.refresh_dropdown.clone();
 
-        section_container()
+        section_container(cx)
             .child(
                 div()
                     .font_weight(FontWeight::BOLD)
+                    .text_color(cx.theme().foreground)
                     .child(format!("{} (ID: {})", self.monitor_name, self.monitor_id)),
             )
             .child(

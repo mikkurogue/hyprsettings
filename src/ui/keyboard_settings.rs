@@ -3,7 +3,7 @@ use gpui_component::button::Button;
 use gpui_component::dropdown::*;
 use std::collections::HashSet;
 
-use gpui_component::StyledExt;
+use gpui_component::{StyledExt, ActiveTheme as _};
 
 use crate::{
     conf::{self, write_override_line},
@@ -114,11 +114,12 @@ impl Render for KeyboardSettings {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let selected_locales = self.selected_locales.clone();
 
-        section_container()
+        section_container(cx)
             .min_h(px(200.0))
             .child(
                 div()
                     .font_weight(FontWeight::BOLD)
+                    .text_color(cx.theme().foreground)
                     .child("Input locales".to_string()),
             )
             .child(
@@ -143,7 +144,7 @@ impl Render for KeyboardSettings {
                                 .map(|(idx, locale)| {
                                     let locale_clone = locale.clone();
                                     let label = self.get_label_for_code(locale);
-                                    item_pill()
+                                    item_pill(cx)
                                         .child(
                                             div()
                                                 .text_sm()

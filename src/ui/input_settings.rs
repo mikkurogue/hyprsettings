@@ -22,8 +22,8 @@ impl InputSettings {
 }
 
 impl Render for InputSettings {
-    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        section_sub_container()
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        section_sub_container(cx)
             .child(self.keyboard_settings.clone())
             .child(self.mouse_settings.clone())
     }

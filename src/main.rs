@@ -1,6 +1,8 @@
-use gpui::App;
+use std::rc::Rc;
+
 use gpui::*;
 use gpui_component::*;
+use serde::Deserialize;
 
 mod conf;
 mod ui;
@@ -18,33 +20,35 @@ pub struct Hyprconfig {
 }
 
 impl Render for Hyprconfig {
-    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
-        main_container()
-            .child(section_title("Hyprland configuration tool"))
-            .child(section_divider())
-            .child(section_title("Monitors"))
-            .child(section_sub_container().children(self.monitor_settings.iter().cloned()))
-            .child(section_divider())
-            .child(section_title("Input"))
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        main_container(cx)
+            .child(section_title("Hyprland configuration tool", cx))
+            .child(section_divider(cx))
+            .child(section_title("Monitors", cx))
+            .child(section_sub_container(cx).children(self.monitor_settings.iter().cloned()))
+            .child(section_divider(cx))
+            .child(section_title("Input", cx))
             .child(self.input_settings.clone())
     }
 }
 
-pub fn init(cx: &mut App) {
-    // gpui-component has built-in themes
-    let theme_name = "Default Dark";
-
-    // Try to load the built-in theme
-    if let Some(theme) = ThemeRegistry::global(cx).themes().get(theme_name).cloned() {
-        Theme::global_mut(cx).apply_config(&theme);
-    } else {
-        eprintln!("Theme '{}' not found. Available themes:", theme_name);
-        for name in ThemeRegistry::global(cx).themes().keys() {
-            eprintln!("  - {}", name);
-        }
-    }
+#[derive(Deserialize)]
+struct ThemeFile {
+    themes: Vec<ThemeConfig>,
 }
 
+pub fn init(cx: &mut App) {
+    let theme_content = include_str!("../themes/catppuccin.json");
+    let theme_file: ThemeFile = serde_json::from_str(theme_content).unwrap();
+
+    if let Some(theme) = theme_file
+        .themes
+        .into_iter()
+        .find(|t| t.name == "Catppuccin Mocha")
+    {
+        Theme::global_mut(cx).apply_config(&Rc::new(theme));
+    }
+}
 fn main() {
     // first check if overrides file exists, if not create it.
 
