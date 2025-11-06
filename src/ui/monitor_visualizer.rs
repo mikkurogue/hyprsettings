@@ -1,13 +1,13 @@
-use gpui::*;
 use gpui::prelude::FluentBuilder;
+use gpui::*;
 use gpui_component::ActiveTheme as _;
-use gpui_component::dropdown::*;
-use gpui_component::button::Button;
 use gpui_component::IndexPath;
+use gpui_component::button::Button;
+use gpui_component::dropdown::*;
 use std::process::Command;
 
-use crate::util::monitor::MonitorInfo;
 use crate::conf::{monitor_override, write_override_line};
+use crate::util::monitor::MonitorInfo;
 use crate::util::monitor::MonitorMode;
 
 const PADDING: f32 = 40.0;
@@ -84,11 +84,11 @@ impl MonitorVisualizer {
         // Calculate scale to fit monitors nicely with padding
         let target_width = (total_width + 2.0 * PADDING) * OVERALL_SCALE;
         let target_height = (total_height + 2.0 * PADDING) * OVERALL_SCALE;
-        
+
         // Use at least minimum canvas size (also scaled)
         let canvas_width = target_width.max(MIN_CANVAS_WIDTH * OVERALL_SCALE);
         let canvas_height = target_height.max(MIN_CANVAS_HEIGHT * OVERALL_SCALE);
-        
+
         // Scale factor to convert real coordinates to visual coordinates
         let scale_factor = ((canvas_width - 2.0 * PADDING * OVERALL_SCALE) / total_width)
             .min((canvas_height - 2.0 * PADDING * OVERALL_SCALE) / total_height)
@@ -97,7 +97,7 @@ impl MonitorVisualizer {
         // Calculate the scaled dimensions of the monitor layout
         let scaled_layout_width = total_width * scale_factor;
         let scaled_layout_height = total_height * scale_factor;
-        
+
         // Center the layout in the canvas
         let offset_x = (canvas_width - scaled_layout_width) / 2.0 - (min_x as f32 * scale_factor);
         let offset_y = (canvas_height - scaled_layout_height) / 2.0 - (min_y as f32 * scale_factor);
@@ -140,11 +140,16 @@ impl MonitorVisualizer {
             available_refresh_rates: vec![],
         }
     }
-    
-    fn update_dropdowns_for_monitor(&mut self, idx: usize, window: &mut Window, cx: &mut Context<Self>) {
+
+    fn update_dropdowns_for_monitor(
+        &mut self,
+        idx: usize,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         if let Some(monitor_box) = self.monitors.get(idx) {
             let monitor = &monitor_box.monitor;
-            
+
             // Get unique resolutions
             let mut resolutions: Vec<String> = monitor
                 .available_modes
@@ -153,11 +158,11 @@ impl MonitorVisualizer {
                 .collect();
             resolutions.sort();
             resolutions.dedup();
-            
+
             let current_res_idx = resolutions
                 .iter()
                 .position(|r| r == &monitor.current_resolution);
-            
+
             let resolution_dropdown = cx.new(|cx| {
                 DropdownState::new(
                     resolutions.clone(),
@@ -166,7 +171,7 @@ impl MonitorVisualizer {
                     cx,
                 )
             });
-            
+
             // Get refresh rates for current resolution
             let refresh_rates: Vec<String> = monitor
                 .available_modes
@@ -174,10 +179,10 @@ impl MonitorVisualizer {
                 .filter(|m| m.resolution == monitor.current_resolution)
                 .map(|m| format!("{:.2}Hz", m.refresh_rate))
                 .collect();
-            
+
             let current_refresh_str = format!("{:.2}Hz", monitor.current_refresh_rate);
             let current_refresh_idx = refresh_rates.iter().position(|r| r == &current_refresh_str);
-            
+
             let refresh_dropdown = cx.new(|cx| {
                 DropdownState::new(
                     refresh_rates.clone(),
@@ -186,7 +191,7 @@ impl MonitorVisualizer {
                     cx,
                 )
             });
-            
+
             self.available_resolutions = resolutions;
             self.available_refresh_rates = refresh_rates;
             self.resolution_dropdown = Some(resolution_dropdown);
@@ -196,10 +201,7 @@ impl MonitorVisualizer {
 
     fn parse_resolution(resolution: &str) -> (i32, i32) {
         if let Some((w, h)) = resolution.split_once('x') {
-            (
-                w.parse().unwrap_or(1920),
-                h.parse().unwrap_or(1080),
-            )
+            (w.parse().unwrap_or(1920), h.parse().unwrap_or(1080))
         } else {
             (1920, 1080)
         }
@@ -215,10 +217,8 @@ impl MonitorVisualizer {
     fn print_monitor_positions(&self) {
         println!("\n=== Monitor Positions ===");
         for monitor_box in &self.monitors {
-            let position = self.calculate_actual_position(
-                monitor_box.visual_x,
-                monitor_box.visual_y,
-            );
+            let position =
+                self.calculate_actual_position(monitor_box.visual_x, monitor_box.visual_y);
             let is_primary = position == (0, 0);
             println!(
                 "{} (ID: {}): {}x{} {}",
@@ -233,16 +233,17 @@ impl MonitorVisualizer {
     }
 
     fn apply_monitor_config_immediately(&self, monitor_box: &MonitorBox) {
-        let config_value = format!("{},{}@{},{}x{},1",
+        let config_value = format!(
+            "{},{}@{},{}x{},1",
             monitor_box.monitor.name,
             monitor_box.monitor.current_resolution,
             monitor_box.monitor.current_refresh_rate,
             monitor_box.monitor.position.0,
             monitor_box.monitor.position.1
         );
-        
+
         println!("Applying monitor position via hyprctl: {}", config_value);
-        
+
         match Command::new("hyprctl")
             .args(["keyword", "monitor", &config_value])
             .output()
@@ -265,7 +266,8 @@ impl MonitorVisualizer {
 impl Render for MonitorVisualizer {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.theme();
-        let selected_monitor = self.selected_monitor_index
+        let selected_monitor = self
+            .selected_monitor_index
             .and_then(|idx| self.monitors.get(idx))
             .map(|m| m.monitor.clone());
 
@@ -678,4 +680,3 @@ impl Render for MonitorVisualizer {
             })
     }
 }
-

@@ -1,5 +1,5 @@
 use gpui::*;
-use gpui_component::{StyledExt, ActiveTheme};
+use gpui_component::{ActiveTheme, StyledExt};
 
 pub fn item_pill<T>(cx: &mut Context<T>) -> Div {
     div()

@@ -196,13 +196,15 @@ pub fn write_override_line(line: &str) -> anyhow::Result<()> {
 /// Generate a monitor override string for hyprland configuration.
 /// Format: monitor=name,resolution@refreshrate,position,scale
 /// Example: monitor=DP-3,2560x1440@155,0x0,1
-pub fn monitor_override(monitor_name: String, settings: MonitorMode, position: (i32, i32)) -> String {
+pub fn monitor_override(
+    monitor_name: String,
+    settings: MonitorMode,
+    position: (i32, i32),
+) -> String {
     let position_string = format!("{}x{}", position.0, position.1);
     let config_string = format!(
         "{}@{},{},1",
-        settings.resolution,
-        settings.refresh_rate,
-        position_string
+        settings.resolution, settings.refresh_rate, position_string
     );
 
     format!(
@@ -254,7 +256,7 @@ mod tests {
         assert_eq!(monitor_config.extract_key("# comment line"), None);
         assert_eq!(monitor_config.extract_key("some other config"), None);
     }
-    
+
     #[test]
     fn test_monitor_override_with_position() {
         let result = monitor_override(
@@ -266,7 +268,7 @@ mod tests {
             (0, 0),
         );
         assert_eq!(result, "monitor=DP-3,2560x1440@155,0x0,1");
-        
+
         let result2 = monitor_override(
             "HDMI-A-1".to_string(),
             MonitorMode {
@@ -276,7 +278,7 @@ mod tests {
             (1920, 0),
         );
         assert_eq!(result2, "monitor=HDMI-A-1,1920x1080@60,1920x0,1");
-        
+
         // Test negative position (monitor above primary)
         let result3 = monitor_override(
             "DP-2".to_string(),

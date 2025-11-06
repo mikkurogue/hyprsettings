@@ -1,9 +1,9 @@
 use gpui::*;
+use gpui_component::ActiveTheme as _;
 use gpui_component::StyledExt;
 use gpui_component::button::Button;
 use gpui_component::slider::{Slider, SliderEvent, SliderState};
 use gpui_component::switch::Switch;
-use gpui_component::ActiveTheme as _;
 
 use crate::conf::{mouse_force_no_accel_override, mouse_sensitivity_override, write_override_line};
 use crate::ui::section_container::section_container;

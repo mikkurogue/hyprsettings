@@ -3,7 +3,7 @@ use gpui_component::button::Button;
 use gpui_component::dropdown::*;
 use std::collections::HashSet;
 
-use gpui_component::{StyledExt, ActiveTheme as _};
+use gpui_component::{ActiveTheme as _, StyledExt};
 
 use crate::{
     conf::{self, write_override_line},
