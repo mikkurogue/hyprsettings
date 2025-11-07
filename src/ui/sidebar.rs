@@ -44,15 +44,4 @@ pub fn create_sidebar(
                     ),
             ),
         )
-        .child(
-            SidebarGroup::new("Sound").child(
-                SidebarMenu::new().child(
-                    SidebarMenuItem::new("Audio")
-                        .active(active_section == ActiveSection::Audio)
-                        .on_click(cx.listener(|view: &mut Hyprconfig, _, _, cx| {
-                            view.set_active_section(ActiveSection::Audio, cx);
-                        })),
-                ),
-            ),
-        )
 }

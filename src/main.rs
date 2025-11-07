@@ -20,7 +20,6 @@ pub enum ActiveSection {
     Monitors,
     Keyboard,
     Mouse,
-    Audio,
 }
 
 impl ToString for ActiveSection {
@@ -29,7 +28,6 @@ impl ToString for ActiveSection {
             ActiveSection::Monitors => "Monitors".to_string(),
             ActiveSection::Keyboard => "Keyboard".to_string(),
             ActiveSection::Mouse => "Mouse".to_string(),
-            ActiveSection::Audio => "Audio".to_string(),
         }
     }
 }
@@ -89,12 +87,6 @@ impl Render for Hyprconfig {
                             .gap_4()
                             .child(section_title("Mouse", cx))
                             .child(self.mouse_settings.clone()),
-                        ActiveSection::Audio => div()
-                            .flex()
-                            .flex_col()
-                            .gap_4()
-                            .child(section_title("Audio", cx))
-                            .child("Audio settings coming soon..."),
                     }),
             )
     }
