@@ -6,7 +6,8 @@ use std::collections::HashSet;
 use gpui_component::{ActiveTheme as _, StyledExt};
 
 use crate::{
-    conf::{self, write_override_line},
+    conf::{self},
+    config_writer::{self, ConfigObjectKey, DeviceSetting},
     ui::{section_container::section_container, tooltip::with_tooltip},
     util::keyboard::{LocaleInfo, current_device_locales, get_all_keyboards, sys_locales},
 };
@@ -84,11 +85,11 @@ impl KeyboardSettings {
             cx.subscribe(
                 dd,
                 |this, _dropdown, event: &DropdownEvent<Vec<String>>, cx| {
-                    if let DropdownEvent::Confirm(Some(selected_label)) = event {
-                        if let Some(code) = this.extract_code_from_label(selected_label) {
-                            this.selected_locales.insert(code);
-                            cx.notify();
-                        }
+                    if let DropdownEvent::Confirm(Some(selected_label)) = event
+                        && let Some(code) = this.extract_code_from_label(selected_label)
+                    {
+                        this.selected_locales.insert(code);
+                        cx.notify();
                     }
                 },
             )
@@ -116,7 +117,7 @@ impl Render for KeyboardSettings {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let devices = &self.devices;
 
-        let devices_view = section_container(cx)
+        section_container(cx)
             .flex_col()
             .gap_3()
             .child(with_tooltip(
@@ -148,17 +149,20 @@ impl Render for KeyboardSettings {
                                         let dropdown_state = this.device_dropdowns[idx].read(cx);
                                         if let Some(sel) = dropdown_state.selected_index(cx) {
                                             let locale_code = this.available_locales[sel.row].code.clone();
-                                            let override_str = conf::set_keyboard_device_layout(device_name.clone(), locale_code.clone());
-                                            println!("Generated override string: {}", override_str);
-                                            write_override_line(&override_str).unwrap_or_else(|e| println!("Failed to write override line: {}", e));
+
+                                            let device = DeviceSetting {
+                                                key: ConfigObjectKey::Device,
+                                                device_name: device_name.clone(),
+                                                kb_layout: locale_code.clone(),
+                                            };
+
+                                            config_writer::ConfigWriter::build(device).and_then(|w| w.write()).unwrap();
                                         } else {
                                             println!("No locale selected for {}", device_name);
                                         }
                                     })),
                             )
                     }))
-            );
-
-        devices_view
+            )
     }
 }

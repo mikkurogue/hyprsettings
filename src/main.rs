@@ -5,6 +5,7 @@ use gpui_component::*;
 use serde::Deserialize;
 
 mod conf;
+mod config_writer;
 mod ui;
 mod util;
 
