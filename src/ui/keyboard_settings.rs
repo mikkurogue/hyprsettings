@@ -121,77 +121,106 @@ impl Render for KeyboardSettings {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let selected_locales = self.selected_locales.clone();
 
-        section_container(cx)
-            .min_h(px(200.0))
-            .child(
-                with_tooltip(
-                    "Keyboard locales determine your keyboard layout. You can select multiple locales and switch between them. The first locale in the list will be your default.",
-                    div()
-                        .font_weight(FontWeight::BOLD)
-                        .text_color(cx.theme().foreground)
-                        .child("Input locales".to_string()),
-                    cx,
-                )
-            )
-            .child(
-                div()
-                    .h_flex()
-                    .gap_4()
-                    .items_center()
-                    .child(div().min_w(px(120.0)).child("Locale:"))
-                    .child(Dropdown::new(&self.locale_dropdown).min_w(px(200.0))),
-            )
-            .child(
-                div()
-                    .h_flex()
-                    .gap_4()
-                    .items_center()
-                    .child(div().min_w(px(120.0)).child("Selected:"))
-                    .child(
-                        div().h_flex().gap_2().flex_wrap().children(
-                            self.selected_locales
-                                .iter()
-                                .enumerate()
-                                .map(|(idx, locale)| {
-                                    let locale_clone = locale.clone();
-                                    let label = self.get_label_for_code(locale);
-                                    item_pill(cx)
-                                        .child(
-                                            div()
-                                                .text_sm()
-                                                .child(format!("{} ({})", label, locale)),
-                                        )
-                                        .child(Button::new(("remove", idx)).label("×").on_click(
-                                            cx.listener(move |this, _, _, cx| {
-                                                this.remove_locale(&locale_clone, cx);
-                                            }),
-                                        ))
-                                }),
-                        ),
-                    ),
-            )
-            .child(
-                div()
-                    .h_flex()
-                    .gap_4()
-                    .items_center()
-                    .child(div().min_w(px(120.0)))
-                    .child(
-                        Button::new("apply-keyboard-settings")
-                            .label("Apply keyboard config")
-                            .on_click(move |_, _, _cx| {
-                                // TODO: remove the clone here this is just dirty hack to get it
-                                // working
-                                let override_str = conf::locale_override(selected_locales.clone());
+        let devices = get_all_keyboards().unwrap_or_default();
 
-                                // DEBUG
-                                println!("Generated locale override string: {}", override_str);
+        let devices_view = section_container(cx)
+            .flex_col()
+            .gap_3()
+            .child(with_tooltip(
+                "Detected the following keyboard input devices. Beware that some may be duplicates and only 1 of them needs to have a setup",
+                div().font_weight(FontWeight::BOLD).text_color(cx.theme().foreground).child("Keyboards".to_string()),
+                cx,
+            ))
+            .child(
+                div()
+                    .h_flex()
+                    .gap_4()
+                    .flex_wrap()
+                    .children(devices.iter().map(|d| {
+                        div()
+                            .flex_col()
+                            .gap_2()
+                            .p_6()
+                            .border_1()
+                            .border_color(cx.theme().border)
+                            .child(div().font_weight(FontWeight::BOLD).child(d.name.clone()))
+                            .child(div().text_sm().child(format!("Layouts: {}", d.layout)))
+                    }))
+            );
 
-                                write_override_line(&override_str).unwrap_or_else(|e| {
-                                    println!("Failed to write override line: {}", e);
-                                });
-                            }),
-                    ),
-            )
+        devices_view
+
+        // section_container(cx)
+        //     .min_h(px(200.0))
+        //     .child(
+        //         with_tooltip(
+        //             "Keyboard locales determine your keyboard layout. You can select multiple locales and switch between them. The first locale in the list will be your default.",
+        //             div()
+        //                 .font_weight(FontWeight::BOLD)
+        //                 .text_color(cx.theme().foreground)
+        //                 .child("Input locales".to_string()),
+        //             cx,
+        //         )
+        //     )
+        //     .child(
+        //         div()
+        //             .h_flex()
+        //             .gap_4()
+        //             .items_center()
+        //             .child(div().min_w(px(120.0)).child("Locale:"))
+        //             .child(Dropdown::new(&self.locale_dropdown).min_w(px(200.0))),
+        //     )
+        //     .child(
+        //         div()
+        //             .h_flex()
+        //             .gap_4()
+        //             .items_center()
+        //             .child(div().min_w(px(120.0)).child("Selected:"))
+        //             .child(
+        //                 div().h_flex().gap_2().flex_wrap().children(
+        //                     self.selected_locales
+        //                         .iter()
+        //                         .enumerate()
+        //                         .map(|(idx, locale)| {
+        //                             let locale_clone = locale.clone();
+        //                             let label = self.get_label_for_code(locale);
+        //                             item_pill(cx)
+        //                                 .child(
+        //                                     div()
+        //                                         .text_sm()
+        //                                         .child(format!("{} ({})", label, locale)),
+        //                                 )
+        //                                 .child(Button::new(("remove", idx)).label("×").on_click(
+        //                                     cx.listener(move |this, _, _, cx| {
+        //                                         this.remove_locale(&locale_clone, cx);
+        //                                     }),
+        //                                 ))
+        //                         }),
+        //                 ),
+        //             ),
+        //     )
+        //     .child(
+        //         div()
+        //             .h_flex()
+        //             .gap_4()
+        //             .items_center()
+        //             .child(div().min_w(px(120.0)))
+        //             .child(
+        //                 Button::new("apply-keyboard-settings")
+        //                     .label("Apply keyboard config")
+        //                     .on_click(move |_, _, _cx| {
+        //                         // TODO: remove the clone here this is just dirty hack to get it
+        //                         // working
+        //                         let override_str = conf::locale_override(selected_locales.clone());
+        //
+        //                         // DEBUG
+        //                         println!("Generated locale override string: {}", override_str);
+        //
+        //                         write_override_line(&override_str).unwrap_or_else(|e| {
+        //                             println!("Failed to write override line: {}", e);
+        //                         });
+        //                     }),
+        //             ),
+        //     )
     }
 }

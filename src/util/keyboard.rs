@@ -81,7 +81,7 @@ pub fn current_device_locales() -> anyhow::Result<HashSet<String>> {
     Ok(locales)
 }
 
-/// Get all connected keyboards from hyprctl
+/// Get all connected keyboards from hyprctl, filtering out obvious non-keyboard input devices.
 pub fn get_all_keyboards() -> anyhow::Result<Vec<Keyboard>> {
     let output = Command::new("hyprctl").args(["devices", "-j"]).output()?;
 
@@ -92,5 +92,43 @@ pub fn get_all_keyboards() -> anyhow::Result<Vec<Keyboard>> {
     let json_str = String::from_utf8(output.stdout)?;
     let devices: HyprctlDevices = serde_json::from_str(&json_str)?;
 
-    Ok(devices.keyboards)
+    // Heuristic filter: hyprctl sometimes lists power buttons, headsets, etc. under keyboards.
+    // Adjust list as needed; kept simple to avoid false positives.
+    let filtered = devices
+        .keyboards
+        .into_iter()
+        .filter(|k| {
+            let n = k.name.to_lowercase();
+            // deny patterns: non-keyboard or auxiliary HID endpoints
+            let deny = [
+                "power-button",
+                "power button",
+                "sleep-button",
+                "sleep button",
+                "video bus",
+                "headset",
+                "camera",
+                "mic",
+                "mouse",
+                "pointer",
+                "hotkeys",
+                "virtual",
+                "system-control",
+                "consumer-control",
+                "fcitx",
+                "usb-receiver",
+            ];
+            if deny.iter().any(|p| n.contains(p)) {
+                return false;
+            }
+            // positive hints for real keyboards
+            if n.contains("keyboard") {
+                return true;
+            }
+            let allow = ["corne", "tkl", "logitech"]; // add more model substrings if needed
+            allow.iter().any(|p| n.contains(p))
+        })
+        .collect();
+
+    Ok(filtered)
 }
