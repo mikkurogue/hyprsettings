@@ -99,13 +99,13 @@ struct ThemeFile {
 }
 
 pub fn init(cx: &mut App) {
-    let theme_content = include_str!("../themes/catppuccin.json");
+    let theme_content = include_str!("../themes/rose-pine.json");
     let theme_file: ThemeFile = serde_json::from_str(theme_content).unwrap();
 
     if let Some(theme) = theme_file
         .themes
         .into_iter()
-        .find(|t| t.name == "Catppuccin Mocha")
+        .find(|t| t.name == "Rose Pine")
     {
         Theme::global_mut(cx).apply_config(&Rc::new(theme));
     }
